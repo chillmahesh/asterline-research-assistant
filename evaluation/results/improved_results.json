@@ -1,0 +1,230 @@
+{
+  "total_cases": 12,
+  "passed": 11,
+  "failed": 1,
+  "pass_rate_pct": 91.67,
+  "mean_retrieval_recall": 0.9167,
+  "mean_citation_precision": 1.0,
+  "mean_groundedness": 0.9028,
+  "is_baseline": false,
+  "cases": [
+    {
+      "id": "case_a_pricing",
+      "category": "research_factual",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "pricing:0",
+        "pricing:1",
+        "pricing:2",
+        "architecture:1",
+        "regions:1",
+        "regions:0"
+      ],
+      "cited_chunks": [
+        "pricing:0",
+        "pricing:1",
+        "pricing:2",
+        "pricing:0",
+        "pricing:1",
+        "pricing:2",
+        "pricing:1"
+      ],
+      "answer_snippet": "Based on the official Asterline documentation:\n\n- **Launch Plan**: Costs **$49/month** and includes 3 seats, an allowance of **100,000 monthly run records**, and **21 days** of searchable run-record retention. Additional",
+      "error_note": null
+    },
+    {
+      "id": "case_b_oncall_stipend_conflict",
+      "category": "conflict_resolution",
+      "passed": true,
+      "recall": 0.5,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "handbook:2",
+        "handbook:0",
+        "oncall:0",
+        "company:0",
+        "oncall:2",
+        "handbook:1"
+      ],
+      "cited_chunks": [
+        "handbook:1",
+        "handbook:1"
+      ],
+      "answer_snippet": "According to the Asterline documentation, there is a documented update that resolves an earlier figure:\n\n- The **current weekly on-call stipend is $175**, effective as of **2026-01-01** [Source: handbook:1 \u2014 Employee han",
+      "error_note": null
+    },
+    {
+      "id": "case_c_cold_storage_retention_conflict",
+      "category": "conflict_resolution",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "retention:0",
+        "retention:1",
+        "retention:2",
+        "security:2",
+        "security:0",
+        "security:1"
+      ],
+      "cited_chunks": [
+        "retention:0",
+        "security:1",
+        "retention:0"
+      ],
+      "answer_snippet": "Regarding raw run records in cold recovery storage:\n\n- Raw run records are retained in cold recovery storage for **20 days** after their plan-specific searchable retention period ends, after which they are permanently de",
+      "error_note": null
+    },
+    {
+      "id": "case_d_inc_2026_03",
+      "category": "incident_investigation",
+      "passed": true,
+      "recall": 0.75,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "incident-03:0",
+        "incident-03:2",
+        "alerts:2",
+        "incident-03:1",
+        "pricing:0",
+        "pricing:2"
+      ],
+      "cited_chunks": [
+        "incident-03:0",
+        "incident-03:1",
+        "alerts:2"
+      ],
+      "answer_snippet": "**INC-2026-03 Investigation Summary**:\n\n- **Cause**: On 2026-03-07, a time synchronization configuration change moved scheduler wall clocks backward. Because the scheduler relied on wall clocks, it incorrectly skipped ev",
+      "error_note": null
+    },
+    {
+      "id": "case_e_inc_2025_12",
+      "category": "incident_investigation",
+      "passed": true,
+      "recall": 0.75,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "export:0",
+        "export:1",
+        "export:2",
+        "incident-12:0",
+        "incident-12:1",
+        "incident-12:2"
+      ],
+      "cited_chunks": [
+        "incident-12:0",
+        "incident-12:1",
+        "export:1",
+        "incident-12:2"
+      ],
+      "answer_snippet": "**INC-2025-12 Investigation Summary**:\n\n- **Cause**: Version 2.1 introduced the **Heron query engine**, which changed query result ordering. This broke Asterline's position-based export deduplication, causing Warehouse E",
+      "error_note": null
+    },
+    {
+      "id": "case_f_apac_region",
+      "category": "missing_or_unannounced",
+      "passed": false,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 0.5,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "pricing:1",
+        "regions:2",
+        "regions:0",
+        "regions:1",
+        "faq:1",
+        "company:0"
+      ],
+      "cited_chunks": [
+        "regions:2",
+        "faq:1",
+        "regions:2"
+      ],
+      "answer_snippet": "According to Asterline documentation:\n\n- **No launch date or timeline has been announced** for an Asia-Pacific region [Source: regions:2 \u2014 Regions and workspace setup], [Source: faq:1 \u2014 Product FAQ].\n- Current supported ",
+      "error_note": null
+    },
+    {
+      "id": "case_g_unanswerable_evidence",
+      "category": "unanswerable",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 0.3333333333333333,
+      "conflict_score": 1.0,
+      "retrieved_chunks": [
+        "export:2",
+        "export:0",
+        "company:0",
+        "company:2",
+        "traces:2",
+        "query:1"
+      ],
+      "cited_chunks": [],
+      "answer_snippet": "I searched the Asterline documentation thoroughly, but **this question cannot be answered from the supplied evidence**.\n\nAsterline Labs documentation does not contain any reference to quantum computing algorithms or rela",
+      "error_note": null
+    },
+    {
+      "id": "case_h_memory_persistence",
+      "category": "memory_behavior",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "error_note": null
+    },
+    {
+      "id": "case_i_memory_correction",
+      "category": "memory_behavior",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "error_note": null
+    },
+    {
+      "id": "case_j_memory_forgetting",
+      "category": "memory_behavior",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "error_note": null
+    },
+    {
+      "id": "case_k_privacy_guard",
+      "category": "privacy_security",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "error_note": null
+    },
+    {
+      "id": "case_l_user_isolation",
+      "category": "security_isolation",
+      "passed": true,
+      "recall": 1.0,
+      "citation_precision": 1.0,
+      "groundedness": 1.0,
+      "conflict_score": 1.0,
+      "error_note": null
+    }
+  ]
+}
