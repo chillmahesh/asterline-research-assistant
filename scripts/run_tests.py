@@ -87,6 +87,13 @@ def run_all_tests():
                         repo = SQLiteMemoryRepository(db_path=db_path)
                         svc = MemoryService(repository=repo)
                         kwargs[param] = (svc, db_path, repo)
+                    elif param == "isolated_graph":
+                        tmp_dir = tempfile.mkdtemp()
+                        db_path = Path(tmp_dir) / "test_iso.db"
+                        repo = SQLiteMemoryRepository(db_path=db_path)
+                        svc = MemoryService(repository=repo)
+                        g = AsterlineGraph(memory_service=svc)
+                        kwargs[param] = (g, repo, db_path, svc)
                     elif param in shared_fixtures:
                         kwargs[param] = shared_fixtures[param]
                     else:

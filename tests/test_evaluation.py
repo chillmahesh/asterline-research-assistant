@@ -48,8 +48,8 @@ def test_metric_calculation_accuracy():
     assert calculate_citation_precision(["fake:1"], ["a"], {"a"}) == 0.0
 
     # Groundedness
-    assert calculate_groundedness(["$49", "Launch"], "The Launch plan is $49") == 1.0
-    assert calculate_groundedness(["$49", "Enterprise"], "The Launch plan is $49") == 0.5
+    assert calculate_groundedness(["$59", "Launch"], "The Launch plan is $59") == 1.0
+    assert calculate_groundedness(["$59", "Enterprise"], "The Launch plan is $59") == 0.5
 
     # Conflict resolution
     ans = "The current stipend is $175, which supersedes the old $140 figure."

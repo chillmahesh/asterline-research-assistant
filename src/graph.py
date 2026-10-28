@@ -60,7 +60,20 @@ class AsterlineGraph:
 
             # Define Edges
             workflow.set_entry_point("memory_pre")
-            workflow.add_edge("memory_pre", "research")
+
+            def route_after_memory_pre(state: AgentState) -> str:
+                if state.get("is_memory_command") or state.get("is_personal_memory_query"):
+                    return "verification"
+                return "research"
+
+            workflow.add_conditional_edges(
+                "memory_pre",
+                route_after_memory_pre,
+                {
+                    "verification": "verification",
+                    "research": "research"
+                }
+            )
 
             def should_retrieve_more(state: AgentState) -> str:
                 if state.get("needs_secondary_retrieval") and state.get("retrieval_iterations", 0) < 2:
@@ -107,6 +120,10 @@ class AsterlineGraph:
             "citations": [],
             "suggested_memory_ops": [],
             "executed_memory_ops": [],
+            "is_memory_command": False,
+            "is_personal_memory_query": False,
+            "personal_memory_attribute": None,
+            "memory_command_result": None,
             "agent_traces": [],
             "error": None,
         }

@@ -11,11 +11,13 @@ from src.memory.repository import SQLiteMemoryRepository
 
 # Patterns to detect potential secrets / credentials that must NEVER be stored
 SENSITIVE_PATTERNS = [
-    re.compile(r"(?i)(api[_-]?key|apikey|secret|token|password|passwd|auth[_-]?token)\s*[:=]\s*['\"]?[\w\-\.]{8,}['\"]?"),
+    re.compile(r"(?i)(api[_-]?key|apikey|secret|token|password|passwd|auth[_-]?token)\s*(?:[:=]|\bis\b)\s*['\"]?[\w\-\.]{8,}['\"]?"),
     re.compile(r"(?i)bearer\s+[a-zA-Z0-9_\-\.]{15,}"),
     re.compile(r"ghp_[a-zA-Z0-9]{36}"),             # GitHub PAT
     re.compile(r"sk-[a-zA-Z0-9]{32,}"),             # OpenAI key pattern
     re.compile(r"lsv2_[a-zA-Z0-9_]{32,}"),          # LangSmith key pattern
+    re.compile(r"AIza[0-9A-Za-z\-_]{35}"),          # Google AI API key pattern
+    re.compile(r"AQ\.[a-zA-Z0-9_\-]{30,}"),         # Gemini token pattern
     re.compile(r"\b(?:\d{3}-\d{2}-\d{4}|\d{9})\b"), # SSN
 ]
 
@@ -71,6 +73,32 @@ class MemoryService:
 
         ranked = sorted(all_memories, key=score_memory, reverse=True)
         return ranked[:limit]
+
+    @staticmethod
+    def is_personal_memory_query(text: str) -> Tuple[bool, Optional[str]]:
+        """
+        Determines whether the user query is asking about personal memory/context
+        (such as project codename, team, role, preferences, or saved items).
+        Returns (is_personal_memory, attribute_topic).
+        """
+        lower = text.lower().strip()
+        patterns = [
+            (r"\b(?:what(?:\s+is|\'s)?|tell\s+me|show\s+me|do\s+you\s+know|do\s+you\s+remember)\s+(?:my\s+)?(?:project\s+)?codename\b", "codename"),
+            (r"\b(?:what(?:\s+is|\'s)?|tell\s+me)\s+my\s+project\b", "project"),
+            (r"\b(?:what(?:\s+is|\'s)?|tell\s+me)\s+my\s+team\b", "team"),
+            (r"\b(?:what(?:\s+is|\'s)?|tell\s+me)\s+my\s+role\b", "role"),
+            (r"\b(?:what(?:\s+is|\'s)?|tell\s+me)\s+my\s+preference\b", "preference"),
+            (r"\b(?:what\s+do\s+you\s+remember\s+about\s+me|what\s+memories\s+do\s+you\s+have)\b", "all"),
+            (r"\b(?:what\s+did\s+i\s+ask\s+you\s+to\s+remember)\b", "all"),
+        ]
+        for pat, attr in patterns:
+            if re.search(pat, lower):
+                return True, attr
+
+        if "my project codename" in lower or "my codename" in lower:
+            return True, "codename"
+
+        return False, None
 
     def parse_memory_intent(self, user_message: str) -> Optional[MemoryOperation]:
         """

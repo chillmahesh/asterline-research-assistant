@@ -34,6 +34,64 @@ class VerificationAgent:
         traces = state.get("agent_traces", [])
         user_memories = state.get("user_memories", [])
 
+        # Personal memory routing: if this was a memory mutation command, final_answer was set by MemoryAgent
+        if state.get("is_memory_command"):
+            state["citations"] = []
+            state["verification_verdict"] = {"status": "memory_command_executed"}
+            return state
+
+        # Personal memory query routing (e.g. asking for project codename, team, role)
+        if state.get("is_personal_memory_query"):
+            attr = state.get("personal_memory_attribute", "general")
+            state["citations"] = []
+            
+            if attr == "codename":
+                matching = [m for m in user_memories if "codename" in m["content"].lower() or "project" in m["content"].lower()]
+                if matching:
+                    content = matching[0]["content"]
+                    m = re.search(r"(?:codename\s+(?:is|=|to)\s*|codename[:\s]+)([a-zA-Z0-9_\-]+)", content, re.IGNORECASE)
+                    codename = m.group(1) if m else content
+                    state["final_answer"] = f"Based on your saved personal memory, your project codename is **{codename}**."
+                else:
+                    state["final_answer"] = "Your project codename is not saved in your personal memory. You can ask me to remember it at any time."
+                
+                step_trace = {
+                    "agent": "VerificationAgent",
+                    "action": "answer_personal_memory_query",
+                    "attribute": attr,
+                    "found": bool(matching),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+                traces.append(step_trace)
+                state["agent_traces"] = traces
+                return state
+
+            elif attr == "team":
+                matching = [m for m in user_memories if "team" in m["content"].lower()]
+                if matching:
+                    state["final_answer"] = f"Based on your saved personal memory, your team is **{matching[0]['content']}**."
+                else:
+                    state["final_answer"] = "Your team is not saved in your personal memory. You can ask me to remember it at any time."
+                return state
+
+            elif attr == "role":
+                matching = [m for m in user_memories if "role" in m["content"].lower()]
+                if matching:
+                    state["final_answer"] = f"Based on your saved personal memory, your role is **{matching[0]['content']}**."
+                else:
+                    state["final_answer"] = "Your role is not saved in your personal memory. You can ask me to remember it at any time."
+                return state
+
+            else:
+                if user_memories:
+                    lines = ["Based on your saved personal memories:\n"]
+                    for m in user_memories:
+                        lines.append(f"- [{m.get('category', 'general').capitalize()}] {m['content']}")
+                    state["final_answer"] = "\n".join(lines)
+                else:
+                    state["final_answer"] = "You have no saved personal memories. You can ask me to remember details at any time."
+                return state
+
         # Step 1: Detect conflicts & supersession clauses in retrieved evidence
         conflict_detected = False
         supersession_notes = []
@@ -79,29 +137,45 @@ class VerificationAgent:
             if user_prefs:
                 pref_notes = f"\nUser preferences for format: {'; '.join(user_prefs)}"
 
+        system_prompt = (
+            "You are Asterline's authoritative research assistant.\n"
+            "Your answers must be strictly grounded in the provided documentary evidence.\n\n"
+            "CRITICAL INSTRUCTIONS FOR NUMERICAL CLAIMS AND ACCURACY:\n"
+            "1. Every numerical value (prices, seat counts, record limits, overage rates, retention days, percentages, version numbers) "
+            "MUST be copied EXACTLY and VERBATIM from the authoritative documentary evidence.\n"
+            "2. NEVER invent, guess, extrapolate, round, or alter any numbers. Never fabricate plans, features, or allowances.\n"
+            "3. If any requested numerical detail, metric, or feature is NOT explicitly stated in the retrieved evidence, "
+            "you MUST state explicitly that the Asterline documentation does not contain that information, rather than inventing values.\n"
+            "4. If documents conflict or describe different values across versions/dates, explain the discrepancy, cite both sources, "
+            "and prioritize the document containing an explicit supersession clause or later publication date.\n"
+            "5. Cite every factual assertion using the exact source format: [Source: chunk_id — title]."
+        )
+
         prompt = (
             f"User Question: {query}\n"
             f"{pref_notes}\n\n"
             f"Authoritative Documentary Evidence:\n{evidence_context}\n\n"
-            f"Synthesize an accurate, evidence-grounded answer based strictly on the documentary evidence above. "
-            f"Cite every factual statement with [Source: chunk_id — title]. "
-            f"If documents conflict or describe different points in time, compare publication dates and versions "
-            f"and prioritize explicit supersession statements. "
-            f"If evidence is missing, state so honestly without inventing facts."
+            f"Instructions:\n"
+            f"- Synthesize an accurate, evidence-grounded answer based strictly on the documentary evidence above.\n"
+            f"- Ensure EVERY numerical claim (pricing, seats, records, overages, retention) is supported verbatim by the evidence.\n"
+            f"- If evidence for any question or detail is missing, unannounced, or conflicting, say so honestly rather than inventing values.\n"
+            f"- Cite every factual statement with [Source: chunk_id — title].\n"
+            f"- If documents conflict, compare publication dates and versions and prioritize explicit supersession statements."
         )
 
-        final_answer = self.llm.generate(prompt=prompt)
+        final_answer = self.llm.generate(prompt=prompt, system_prompt=system_prompt)
 
         # Step 5: Verify citations against retrieved chunks
-        valid_chunk_ids: Set[str] = {c["chunk_id"] for c in chunks}
-        cited_tags = re.findall(r"\[Source:\s*([^\s—]+)\s*—\s*([^\]]+)\]", final_answer)
+        valid_chunks_by_id = {c["chunk_id"]: c for c in chunks}
+        cited_tags = re.findall(r"\[Source:\s*([a-zA-Z0-9_\-]+:[0-9]+)(?:\s*[\—\–\-:]\s*([^\]]+))?\]", final_answer)
         
         verified_citations = []
+        seen_cids = set()
         for cid, title in cited_tags:
             cid_clean = cid.strip()
-            title_clean = title.strip()
-            if cid_clean in valid_chunk_ids:
-                matching_chunk = next(c for c in chunks if c["chunk_id"] == cid_clean)
+            if cid_clean in valid_chunks_by_id and cid_clean not in seen_cids:
+                seen_cids.add(cid_clean)
+                matching_chunk = valid_chunks_by_id[cid_clean]
                 verified_citations.append({
                     "chunk_id": cid_clean,
                     "title": matching_chunk["title"],

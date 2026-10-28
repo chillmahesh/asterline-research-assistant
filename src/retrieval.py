@@ -132,24 +132,29 @@ class DocumentRetriever:
         scored.sort(key=lambda r: r.score, reverse=True)
         return scored[:top_k]
 
-    def multi_search(self, queries: List[str], top_k: int = 5) -> List[RetrievalResult]:
+    def multi_search(self, queries: List[str], top_k: int = 6) -> List[RetrievalResult]:
         """
         Execute multiple search queries and fuse results using Reciprocal Rank Fusion (RRF).
-        Removes duplicates while preserving highest relevance.
+        Aggregates reciprocal rank scores across queries so chunks matching multiple intents rank highest.
         """
-        seen_ids: Set[str] = set()
-        merged: List[RetrievalResult] = []
+        rrf_scores: Dict[str, float] = {}
+        chunk_map: Dict[str, CorpusChunk] = {}
+        best_similarity: Dict[str, float] = {}
 
+        k_constant = 60.0
         for q in queries:
-            results = self.search(q, top_k=top_k)
-            for res in results:
-                if res.chunk.chunk_id not in seen_ids:
-                    seen_ids.add(res.chunk.chunk_id)
-                    merged.append(res)
+            results = self.search(q, top_k=min(top_k * 2, 20))
+            for rank, res in enumerate(results, start=1):
+                cid = res.chunk.chunk_id
+                chunk_map[cid] = res.chunk
+                rrf_scores[cid] = rrf_scores.get(cid, 0.0) + (1.0 / (k_constant + rank))
+                best_similarity[cid] = max(best_similarity.get(cid, 0.0), res.score)
 
-        # Sort by score descending
-        merged.sort(key=lambda r: r.score, reverse=True)
-        return merged[:top_k]
+        sorted_cids = sorted(rrf_scores.keys(), key=lambda cid: rrf_scores[cid], reverse=True)
+        return [
+            RetrievalResult(chunk=chunk_map[cid], score=best_similarity[cid])
+            for cid in sorted_cids[:top_k]
+        ]
 
     @staticmethod
     def format_evidence_for_prompt(results: List[RetrievalResult]) -> str:

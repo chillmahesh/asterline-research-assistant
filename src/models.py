@@ -129,6 +129,12 @@ class AgentState(TypedDict):
     suggested_memory_ops: List[Dict[str, Any]]
     executed_memory_ops: List[Dict[str, Any]]
     
+    # Memory Intent & Routing State
+    is_memory_command: bool
+    is_personal_memory_query: bool
+    personal_memory_attribute: Optional[str]
+    memory_command_result: Optional[Dict[str, Any]]
+
     # Observability & Trace
     agent_traces: List[Dict[str, Any]]
     error: Optional[str]

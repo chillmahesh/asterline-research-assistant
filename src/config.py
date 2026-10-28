@@ -26,8 +26,10 @@ class Settings:
     sqlite_db_path: Path = BASE_DIR / os.getenv("SQLITE_DB_PATH", "data/asterline.db")
 
     # LLM Configuration
-    # Supported: 'ollama', 'openai', 'mock'
-    llm_provider: str = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+    # Supported: 'gemini', 'ollama', 'openai', 'mock'
+    llm_provider: str = os.getenv("LLM_PROVIDER", "gemini").lower().strip()
+    gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.2")
     openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")

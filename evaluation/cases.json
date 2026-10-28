@@ -4,8 +4,8 @@
     "category": "research_factual",
     "question": "What is the pricing and record allowance for the Launch and Team plans?",
     "expected_chunks": ["pricing:0", "pricing:1"],
-    "expected_entities": ["$49", "$249", "100,000", "1,000,000", "21 days", "180 days"],
-    "description": "Launch plan is $49/mo (3 seats, 100k runs, 21-day retention), Team is $249/mo (10 seats, 1M runs, 180-day retention)."
+    "expected_entities": ["$59", "$449", "1 million", "15 million", "21 days", "180 days"],
+    "description": "Launch plan is $59/mo (4 seats, 1 million runs, 21-day retention), Team is $449/mo (20 seats, 15 million runs, 180-day retention)."
   },
   {
     "id": "case_b_oncall_stipend_conflict",

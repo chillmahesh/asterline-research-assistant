@@ -214,7 +214,7 @@ To enable hosted execution tracing in LangSmith:
 
 | Question | Document Source Cited | Verified Answer Summary |
 | :--- | :--- | :--- |
-| **Plan Pricing** | `[Source: pricing:0 — Plans and billing]` | Launch is $49/mo (3 seats, 100k runs, 21-day retention); Team is $249/mo (10 seats, 1M runs, 180-day retention). |
+| **Plan Pricing** | `[Source: pricing:0 — Plans and billing]` | Launch is $59/mo (4 seats, 1M runs, 21-day retention); Team is $449/mo (20 seats, 15M runs, 180-day retention). |
 | **On-Call Stipend** | `[Source: handbook:1 — Employee handbook]` | Weekly stipend is $175 (effective 2026-01-01), which explicitly supersedes the older $140 figure in `runbook:0`. |
 | **Cold Storage** | `[Source: retention:0 — Data retention policy]` | Raw run records are kept for 20 days, which explicitly supersedes the 60-day figure in `security:1`. |
 | **INC-2026-03** | `[Source: incident-03:0 — INC-2026-03 delayed alerts]` | Signals notifications delayed by up to 34 minutes due to wall-clock shift; fixed in patch 2.3.1 with monotonic clock. |
