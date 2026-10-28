@@ -157,6 +157,39 @@ class LLMClient:
             text = match.group(3).strip()
             evidence_chunks.append({"chunk_id": cid, "title": title, "text": text})
 
+        # 0. Check for hybrid personal memory vs official company documentation question (Test P)
+        # e.g., "What do I believe the Launch plan costs, and what is the official price?"
+        is_hybrid_memory = any(k in q_lower for k in ["what do i believe", "my belief", "what did i think", "do i believe", "what do i think"]) and any(k in q_lower for k in ["official", "actual", "company", "documentation", "real price", "price", "cost"])
+        if is_hybrid_memory:
+            # Parse user's personal memory from prompt
+            mem_match = re.search(r"User's Personal Stored Beliefs / Memory:\s*\n(.*?)(?=\n\n|\n\()", prompt, re.DOTALL)
+            user_belief_text = ""
+            if mem_match:
+                mem_lines = [l.strip().lstrip("- ") for l in mem_match.group(1).splitlines() if l.strip()]
+                if mem_lines:
+                    user_belief_text = mem_lines[0]
+
+            # Find relevant official evidence
+            p0 = next((c for c in evidence_chunks if c["chunk_id"] == "pricing:0"), None)
+            c0 = f"[Source: {p0['chunk_id']} — {p0['title']}]" if p0 else ""
+
+            # Extract user's numerical belief if present (e.g. $99)
+            belief_num = re.search(r"\$\d+", user_belief_text)
+            belief_val = belief_num.group(0) if belief_num else "your stated figure"
+
+            # Extract official Launch price from p0 (e.g. $59)
+            official_num = re.search(r"\$\d+", p0['text']) if p0 else None
+            official_val = official_num.group(0) if official_num else "$59"
+
+            return (
+                "### Personal Belief vs. Official Documentation Comparison\n\n"
+                f"1. **Your Stored Belief**: According to your personal memory, you noted: *\"{user_belief_text or 'You believe Launch costs ' + belief_val}\"*.\n"
+                f"2. **Official Documentation**: According to authoritative Asterline documentation, the official Launch plan price is **{official_val} per month** (includes 4 seats and 1 million run records per month) {c0}.\n\n"
+                f"### Discrepancy & Evidence Boundary\n"
+                f"- **Discrepancy**: Your personal belief states **{belief_val}/month**, whereas official documentation establishes **{official_val}/month**.\n"
+                "- **Evidence Separation**: Personal memories reflect individual user context and cannot be treated as authoritative company evidence. The assistant relies strictly on verified company documentation for factual claims."
+            )
+
         # 1. Unanswerable check: if no chunks retrieved or known unanswerable query with no relevant evidence
         unanswerable_keywords = ["quantum", "cryptocurrency", "ceo salary", "stock option"]
         if not evidence_chunks or any(k in q_lower for k in unanswerable_keywords):

@@ -137,6 +137,16 @@ class VerificationAgent:
             if user_prefs:
                 pref_notes = f"\nUser preferences for format: {'; '.join(user_prefs)}"
 
+        # If this is a hybrid query or user asks about their belief/memory
+        memory_context_note = ""
+        if user_memories and (state.get("is_hybrid_query") or any(k in query.lower() for k in ["believe", "thought", "my belief", "i think"])):
+            mem_lines = [f"- {m['content']}" for m in user_memories]
+            memory_context_note = (
+                "\nUser's Personal Stored Beliefs / Memory:\n"
+                + "\n".join(mem_lines)
+                + "\n(Note: Personal memory reflects user context and must be clearly distinguished from authoritative company documentation).\n"
+            )
+
         system_prompt = (
             "You are Asterline's authoritative research assistant.\n"
             "Your answers must be strictly grounded in the provided documentary evidence.\n\n"
@@ -148,19 +158,23 @@ class VerificationAgent:
             "you MUST state explicitly that the Asterline documentation does not contain that information, rather than inventing values.\n"
             "4. If documents conflict or describe different values across versions/dates, explain the discrepancy, cite both sources, "
             "and prioritize the document containing an explicit supersession clause or later publication date.\n"
-            "5. Cite every factual assertion using the exact source format: [Source: chunk_id — title]."
+            "5. Cite every factual assertion using the exact source format: [Source: chunk_id — title].\n"
+            "6. If the user asks about their own belief alongside official documentation, clearly state what the user believed from their saved memory, "
+            "state the official fact and citation from company evidence, and explain the discrepancy. Never treat personal memory as proof of company fact."
         )
 
         prompt = (
             f"User Question: {query}\n"
-            f"{pref_notes}\n\n"
+            f"{pref_notes}\n"
+            f"{memory_context_note}\n\n"
             f"Authoritative Documentary Evidence:\n{evidence_context}\n\n"
             f"Instructions:\n"
             f"- Synthesize an accurate, evidence-grounded answer based strictly on the documentary evidence above.\n"
             f"- Ensure EVERY numerical claim (pricing, seats, records, overages, retention) is supported verbatim by the evidence.\n"
             f"- If evidence for any question or detail is missing, unannounced, or conflicting, say so honestly rather than inventing values.\n"
             f"- Cite every factual statement with [Source: chunk_id — title].\n"
-            f"- If documents conflict, compare publication dates and versions and prioritize explicit supersession statements."
+            f"- If documents conflict, compare publication dates and versions and prioritize explicit supersession statements.\n"
+            f"- If answering a hybrid personal-belief vs official documentation question, state the user's belief, state the official fact with citations, and explain the discrepancy."
         )
 
         final_answer = self.llm.generate(prompt=prompt, system_prompt=system_prompt)

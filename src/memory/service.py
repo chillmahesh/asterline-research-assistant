@@ -75,12 +75,33 @@ class MemoryService:
         return ranked[:limit]
 
     @staticmethod
+    def is_hybrid_query(text: str) -> bool:
+        """
+        Determines whether the query asks both about user memory/belief AND official company evidence.
+        Example: 'What do I believe the Launch plan costs, and what is the official price?'
+        """
+        lower = text.lower().strip()
+        has_memory_aspect = any(k in lower for k in [
+            "what do i believe", "what did i think", "what was my belief", "my belief", 
+            "what did i say", "what do i think", "my estimate", "what did i believe",
+            "do i believe", "what do i remember", "what is my belief"
+        ])
+        has_official_aspect = any(k in lower for k in [
+            "official", "actual", "company", "documentation", "handbook", "policy", 
+            "real price", "asterline", "corpus", "authoritative", "what is the price"
+        ])
+        return has_memory_aspect and has_official_aspect
+
+    @staticmethod
     def is_personal_memory_query(text: str) -> Tuple[bool, Optional[str]]:
         """
         Determines whether the user query is asking about personal memory/context
         (such as project codename, team, role, preferences, or saved items).
         Returns (is_personal_memory, attribute_topic).
         """
+        if MemoryService.is_hybrid_query(text):
+            return False, None
+
         lower = text.lower().strip()
         patterns = [
             (r"\b(?:what(?:\s+is|\'s)?|tell\s+me|show\s+me|do\s+you\s+know|do\s+you\s+remember)\s+(?:my\s+)?(?:project\s+)?codename\b", "codename"),

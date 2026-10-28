@@ -122,6 +122,7 @@ class AsterlineGraph:
             "executed_memory_ops": [],
             "is_memory_command": False,
             "is_personal_memory_query": False,
+            "is_hybrid_query": False,
             "personal_memory_attribute": None,
             "memory_command_result": None,
             "agent_traces": [],

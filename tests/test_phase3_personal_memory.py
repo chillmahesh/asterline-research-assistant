@@ -225,3 +225,39 @@ def test_phase3_test_q_memory_scope_and_ambiguity(isolated_graph):
     # Must cite release-23:0
     citations = [c["chunk_id"] for c in state["citations"]]
     assert any(c in citations for c in ["release-23:0", "query:0"])
+
+
+def test_phase3_test_p_memory_vs_authoritative_documentation(isolated_graph):
+    """
+    TEST P — Memory versus authoritative documentation:
+    Save this belief: 'I believe the Launch plan costs $99 per month.'
+    Ask: 'What do I believe the Launch plan costs, and what is the official price?'
+    Expected:
+    - Recall the user's belief as $99.
+    - Independently retrieve the official price of $59 from pricing:0.
+    - Clearly distinguish the belief from official evidence.
+    - Explain the discrepancy.
+    - Do not hardcode either value in application logic.
+    """
+    graph, repo, db_path, service = isolated_graph
+    user_id = "user_p_belief"
+    conv_id = "conv_p_belief_1"
+
+    # Save user belief
+    graph.invoke(user_id, conv_id, "Remember that I believe the Launch plan costs $99 per month.")
+
+    # Query in a new conversation
+    state = graph.invoke(user_id, "conv_p_belief_2", "What do I believe the Launch plan costs, and what is the official price?")
+    ans = state.get("final_answer", "")
+    ans_lower = ans.lower()
+
+    # Recall belief as $99
+    assert "$99" in ans, "Must recall user belief of $99"
+    # Independently retrieve official price of $59
+    assert "$59" in ans, "Must cite official price of $59"
+    # Clearly distinguish belief from official evidence & explain discrepancy
+    assert ("discrepancy" in ans_lower or "differs" in ans_lower or "distinction" in ans_lower or "versus" in ans_lower)
+    # Must cite pricing:0
+    cited_ids = [c["chunk_id"] for c in state.get("citations", [])]
+    assert "pricing:0" in cited_ids, "Must cite pricing:0"
+

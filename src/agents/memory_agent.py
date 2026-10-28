@@ -59,10 +59,12 @@ class MemoryAgent:
             else:
                 state["final_answer"] = "Memory operation processed."
 
-        # Step 2: Check if user is asking a personal memory question (e.g. project codename)
+        # Step 2: Check if user is asking a personal memory question (e.g. project codename) or hybrid
         is_personal, attr = self.service.is_personal_memory_query(query)
+        is_hybrid = self.service.is_hybrid_query(query)
         state["is_personal_memory_query"] = is_personal
         state["personal_memory_attribute"] = attr
+        state["is_hybrid_query"] = is_hybrid
 
         # Step 3: Retrieve user-isolated memories
         user_memories = self.service.get_user_context(user_id=user_id, query=query, limit=10)

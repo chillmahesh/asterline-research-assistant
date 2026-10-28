@@ -132,6 +132,7 @@ class AgentState(TypedDict):
     # Memory Intent & Routing State
     is_memory_command: bool
     is_personal_memory_query: bool
+    is_hybrid_query: bool
     personal_memory_attribute: Optional[str]
     memory_command_result: Optional[Dict[str, Any]]
 
